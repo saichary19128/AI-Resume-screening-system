@@ -9,3 +9,4 @@ This archive contains a starter MERN project that demonstrates:
 See backend/.env.example for environment variables to fill.
 # resume-screener
 # AI-Resume-screener
+# AI-Resume-screener
