@@ -10,3 +10,4 @@ See backend/.env.example for environment variables to fill.
 # resume-screener
 # AI-Resume-screener
 # AI-Resume-screener
+# AI-Resume-screening-system
