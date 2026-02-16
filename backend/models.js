@@ -5,6 +5,7 @@ const CandidateSchema = new mongoose.Schema({
   email: String,
   resumeText: String,
   resumeEmbedding: { type: [Number], default: [] },
+  shortlisted: { type: Boolean, default: false },
   uploadedAt: { type: Date, default: Date.now }
 });
 
