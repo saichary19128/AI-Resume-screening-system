@@ -1,17 +1,17 @@
 const express = require('express');
 const multer = require('multer');
 const mongoose = require('mongoose');
-
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const { parsePDFBuffer } = require('./utils/pdfParser');
 const { getEmbedding, cosineSimilarity } = require('./utils/embeddings');
-const { Candidate, Job, Match } = require('./models');
+const { Candidate, Job, Match, User } = require('./models');
 
 const router = express.Router();
 const upload = multer();
 
 let openaiClient = null;
 
-// Lazy-load OpenAI client
 async function getOpenAIClient() {
   if (!openaiClient) {
     const OpenAI = (await import('openai')).default;
@@ -20,9 +20,7 @@ async function getOpenAIClient() {
   return openaiClient;
 }
 
-/* =========================
-   Upload Resume
-========================= */
+
 router.post('/uploadResume', upload.single('resume'), async (req, res) => {
   try {
     const { name, email } = req.body;
@@ -50,9 +48,7 @@ router.post('/uploadResume', upload.single('resume'), async (req, res) => {
   }
 });
 
-/* =========================
-   Create Job
-========================= */
+
 router.post('/jobs', async (req, res) => {
   try {
     const { title, description } = req.body;
@@ -73,9 +69,7 @@ router.post('/jobs', async (req, res) => {
   }
 });
 
-/* =========================
-   Match Resume & Job
-========================= */
+
 router.post('/match', async (req, res) => {
   try {
     const { candidateId, jobId } = req.body;
@@ -139,9 +133,7 @@ Give summary and improvement suggestions.
   }
 });
 
-/* =========================
-   Analytics Route (SAFE)
-========================= */
+
 router.get('/analytics/job/:jobId', async (req, res) => {
   try {
     const jobId = req.params.jobId;
@@ -179,6 +171,56 @@ router.get("/candidate/:id", async (req, res) => {
     res.json(cand);
   } catch {
     res.status(500).json({ error: "Candidate fetch failed" });
+  }
+});
+
+router.post("/signup", async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+
+    const exists = await User.findOne({ email });
+    if (exists) return res.status(400).json({ error: "User exists" });
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      name,
+      email,
+      password: hashed,
+      role: role || "hr",
+    });
+
+    await user.save();
+
+    res.json({ message: "User created" });
+  } catch (err) {
+    res.status(500).json({ error: "Signup failed" });
+  }
+});
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ error: "Invalid email" });
+
+    const ok = await bcrypt.compare(password, user.password);
+    if (!ok) return res.status(400).json({ error: "Invalid password" });
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET || "secret",
+      { expiresIn: "1d" }
+    );
+
+    res.json({
+      token,
+      role: user.role,
+      name: user.name,
+    });
+
+  } catch {
+    res.status(500).json({ error: "Login failed" });
   }
 });
 

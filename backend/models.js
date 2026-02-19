@@ -24,8 +24,19 @@ const MatchSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+const bcrypt = require("bcryptjs");
+
+const UserSchema = new mongoose.Schema({
+  name: String,
+  email: { type: String, unique: true },
+  password: String,
+  role: { type: String, enum: ["admin", "hr"], default: "hr" },
+  createdAt: { type: Date, default: Date.now }
+});
+
 const Candidate = mongoose.model('Candidate', CandidateSchema);
 const Job = mongoose.model('Job', JobSchema);
 const Match = mongoose.model('Match', MatchSchema);
+const User = mongoose.model("User", UserSchema);
 
-module.exports = { Candidate, Job, Match };
+module.exports = { Candidate, Job, Match, User };

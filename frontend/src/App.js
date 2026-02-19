@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ResumePreview from "./components/ResumePreview";
 import API from "./api";
+import { useNavigate } from "react-router-dom";
 
 function App() {
   const [file, setFile] = useState(null);
@@ -12,6 +13,20 @@ function App() {
   const [jobId, setJobId] = useState("");
   const [result, setResult] = useState(null);
   const [analytics, setAnalytics] = useState(null);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!localStorage.getItem("token")) {
+      navigate("/login");
+    }
+  }, []);
+
+  function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    navigate("/login");
+  }
 
   async function uploadResume(e) {
     e.preventDefault();
@@ -53,7 +68,7 @@ function App() {
   }
 
   async function fetchAnalytics() {
-    if (!jobId) return alert("Create a job first demonstrated");
+    if (!jobId) return alert("Create a job first");
 
     const resp = await API.get(`/analytics/job/${jobId}`);
     setAnalytics(resp.data);
@@ -86,24 +101,32 @@ function App() {
 
   return (
     <>
-      {/* Navbar */}
-      {/* Hero Header */}
+      {/* HEADER */}
       <div
         style={{
           background:
             "linear-gradient(135deg, #1e3c72, #2a5298, #0f2027)",
           color: "white",
-          padding: "50px 20px",
+          padding: "40px 20px",
           marginBottom: "30px",
           boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+          position: "relative",
         }}
       >
+        {/* Logout Button */}
+        <button
+          className="btn btn-danger"
+          style={{ position: "absolute", right: 20, top: 20 }}
+          onClick={logout}
+        >
+          Logout
+        </button>
+
         <div className="container text-center">
           <h1
             style={{
               fontSize: "3.2rem",
               fontWeight: "800",
-              letterSpacing: "1px",
               marginBottom: "10px",
               fontFamily:
                 "'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
@@ -119,7 +142,6 @@ function App() {
       </div>
 
       <div className="container mb-5">
-
         {/* Upload Resume */}
         <div className="card shadow-sm mb-4">
           <div className="card-body">
@@ -164,17 +186,9 @@ function App() {
               </div>
             </div>
 
-            {/* {candidateId && (
-              <div className="alert alert-success mt-2">
-                Candidate saved (ID: {candidateId})
-              </div>
-            )} */}
             {candidateId && (
               <>
-                <p className="text-sm text-gray-600">
-                  ✅ Candidate saved (ID: {candidateId})
-                </p>
-
+                <p>✅ Candidate saved (ID: {candidateId})</p>
                 <ResumePreview candidateId={candidateId} />
               </>
             )}
@@ -202,17 +216,11 @@ function App() {
             />
 
             <div className="mt-3">
-              <button
-                className="btn btn-success me-2"
-                onClick={createJob}
-              >
+              <button className="btn btn-success me-2" onClick={createJob}>
                 Create Job
               </button>
 
-              <button
-                className="btn btn-secondary"
-                onClick={fetchAnalytics}
-              >
+              <button className="btn btn-secondary" onClick={fetchAnalytics}>
                 View Analytics
               </button>
             </div>
@@ -235,8 +243,7 @@ function App() {
                 {analytics.avgScore?.toFixed(2) || 0}%
               </p>
               <p>
-                <strong>Total Candidates:</strong>{" "}
-                {analytics.count || 0}
+                <strong>Total Candidates:</strong> {analytics.count || 0}
               </p>
             </div>
           </div>
@@ -247,10 +254,7 @@ function App() {
           <div className="card-body">
             <h5>3️⃣ Match</h5>
 
-            <button
-              className="btn btn-warning"
-              onClick={runMatch}
-            >
+            <button className="btn btn-warning" onClick={runMatch}>
               Run Match
             </button>
 
@@ -268,13 +272,10 @@ function App() {
             )}
           </div>
         </div>
-
       </div>
-      {/* Footer */}
-      <footer className="bg-dark text-light text-center py-5 mt-7">
-        <div className="container">
-          © {new Date().getFullYear()} AI Resume Screener • MERN + AI
-        </div>
+
+      <footer className="bg-dark text-light text-center py-4">
+        © {new Date().getFullYear()} AI Resume Screener • MERN + AI
       </footer>
     </>
   );
